@@ -36,6 +36,8 @@ void uwsgi_update_load_counters() {
 	ushared->busy_workers = busy_workers;
 	ushared->idle_workers = idle_workers;
 
+	uwsgi_log_verbose("idle: %llu , busy: %llu \n", (unsigned long long) idle_workers, (unsigned long long) busy_workers);
+
 }
 
 void uwsgi_block_signal(int signum) {
