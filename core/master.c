@@ -36,7 +36,7 @@ void uwsgi_update_load_counters() {
 	ushared->busy_workers = busy_workers;
 	ushared->idle_workers = idle_workers;
 
-	uwsgi_log_verbose("idle: %llu , busy: %llu \n", (unsigned long long) idle_workers, (unsigned long long) busy_workers);
+	// uwsgi_log_verbose("idle: %llu , busy: %llu \n", (unsigned long long) idle_workers, (unsigned long long) busy_workers);
 
 }
 
@@ -276,7 +276,18 @@ static void master_check_listen_queue() {
 
 		int q_threshold = uwsgi.numproc * uwsgi.threads;
 		if (uwsgi_sock->queue > 0 && uwsgi_sock->queue > q_threshold) {
-			uwsgi_log_verbose("*** uWSGI listen queue of socket \"%s\" (fd: %d) is growing !!! (%llu/%llu) ***\n", uwsgi_sock->name, uwsgi_sock->fd, (unsigned long long) uwsgi_sock->queue, (unsigned long long) uwsgi_sock->max_queue);
+			uwsgi_log_verbose("*** uWSGI listen queue; %llu; ***\n", (unsigned long long) uwsgi_sock->queue);
+			
+			if (uwsgi.alarm_backlog) {
+				char buf[1024];
+				int ret = snprintf(buf, 1024, "listen queue queueing; %llu;", (unsigned long long) uwsgi_sock->queue);
+				if (ret > 0 && ret < 1024) {
+					struct uwsgi_string_list *usl = NULL;
+					uwsgi_foreach(usl, uwsgi.alarm_backlog) {
+						uwsgi_alarm_trigger(usl->value, buf, ret);
+					}
+				}
+			}
 		}
 
 		if (uwsgi_sock->queue > 0 && uwsgi_sock->queue >= uwsgi_sock->max_queue) {
